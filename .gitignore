@@ -9,3 +9,6 @@ Cargo.lock
 /.vscode
 /benches/target
 node_modules
+/perf
+flamegraph.svg
+perf.data*

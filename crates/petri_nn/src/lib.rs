@@ -1,7 +1,7 @@
 #![feature(array_windows)]
 
 use petri_rand::*;
-use std::iter::{once, repeat_with};
+use std::iter::{once, repeat, repeat_with};
 use std::slice::ArrayWindows;
 
 #[derive(Debug, Clone)]
@@ -24,7 +24,7 @@ impl<'a> Network<'a> {
         let layers = topology.array_windows();
 
         let neurons = layers
-            .flat_map(|[input, output]| repeat_with(move || input).take(*output))
+            .flat_map(|&[input, output]| repeat(input).take(output))
             .map(|input| Neuron::random(rng, input))
             .collect();
 
@@ -64,8 +64,8 @@ impl<'a> Network<'a> {
         let mut weights = weights.into_iter();
 
         let neurons = layers
-            .flat_map(|[input, output]| repeat_with(move || input).take(*output))
-            .map(|input| Neuron::from_weights(*input, &mut weights))
+            .flat_map(|&[input, output]| repeat(input).take(output))
+            .map(|input| Neuron::from_weights(input, &mut weights))
             .collect();
 
         if weights.next().is_some() {
@@ -77,13 +77,13 @@ impl<'a> Network<'a> {
 }
 
 impl Neuron {
-    pub fn random(rng: &PetriRand, input_size: &usize) -> Self {
+    pub fn random(rng: &PetriRand, input_size: usize) -> Self {
         let bias = rng.get_f32_normalised();
 
         let coefficient = rng.get_f32_normalised();
 
         let weights = repeat_with(|| rng.get_f32_normalised())
-            .take(*input_size)
+            .take(input_size)
             .collect();
 
         Self {
@@ -145,7 +145,7 @@ mod tests {
             // Because we always use the same seed, our `rng` in here will
             // always return the same set of values
             let rng = PetriRand::with_seed(Default::default());
-            let neuron = Neuron::random(&rng, &4);
+            let neuron = Neuron::random(&rng, 4);
 
             assert_relative_eq!(neuron.bias, 0.119923115);
             assert_relative_eq!(neuron.coefficient, 0.9945836);
