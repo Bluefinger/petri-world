@@ -2,13 +2,15 @@ use petri_rand::PetriRand;
 
 use crate::chromosome::Chromosome;
 
-pub trait CrossoverMethod {
+pub trait CrossoverMethod<'a> {
+    type Iterator;
+
     fn crossover(
-        &self,
-        rng: &PetriRand,
-        parent_a: &Chromosome,
-        parent_b: &Chromosome,
-    ) -> Chromosome;
+        &'a self,
+        rng: &'a PetriRand,
+        parent_a: &'a Chromosome,
+        parent_b: &'a Chromosome,
+    ) -> Self::Iterator;
 }
 
 #[derive(Clone, Debug)]
@@ -26,17 +28,18 @@ impl Default for UniformCrossover {
     }
 }
 
-impl CrossoverMethod for UniformCrossover {
+impl<'a> CrossoverMethod<'a> for UniformCrossover {
+    type Iterator = impl Iterator<Item = f32> + 'a;
+
     fn crossover(
-        & self,
-        rng: &PetriRand,
-        parent_a: &Chromosome,
-        parent_b: &Chromosome,
-    ) -> Chromosome {
+        &'a self,
+        rng: &'a PetriRand,
+        parent_a: &'a Chromosome,
+        parent_b: &'a Chromosome,
+    ) -> Self::Iterator {
         parent_a.iter()
             .zip(parent_b.iter())
-            .map(|(&a, &b)| if rng.bool() { a } else { b })
-            .collect()
+            .map(move |(&a, &b)| if rng.bool() { a } else { b })
     }
 }
 
@@ -51,19 +54,17 @@ mod tests {
         let parent_a: Chromosome = (1..=100).map(|n| n as f32).collect();
         let parent_b: Chromosome = (1..=100).map(|n| -n as f32).collect();
 
-        let child =
-            UniformCrossover::new().crossover(&rng, &parent_a, &parent_b);
+        let child: Chromosome =
+            UniformCrossover::new().crossover(&rng, &parent_a, &parent_b).collect();
 
         // Number of genes different between `child` and `parent_a`
-        let diff_a = child
-            .iter()
+        let diff_a = child.iter()
             .zip(parent_a)
             .filter(|(c, p)| (*c - p).abs() > f32::EPSILON)
             .count();
 
         // Number of genes different between `child` and `parent_b`
-        let diff_b = child
-            .iter()
+        let diff_b = child.iter()
             .zip(parent_b)
             .filter(|(c, p)| (*c - p).abs() > f32::EPSILON)
             .count();

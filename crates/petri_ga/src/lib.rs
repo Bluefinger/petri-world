@@ -7,20 +7,21 @@ mod mutation;
 mod selection;
 
 use petri_rand::PetriRand;
-use std::iter::repeat_with;
+use std::{iter::repeat_with, marker::PhantomData};
 
 pub use crate::{chromosome::*, crossover::*, individual::*, mutation::*, selection::*};
 
-pub struct GeneticAlgorithm<S: SelectionMethod, C: CrossoverMethod, M: MutationMethod> {
+pub struct GeneticAlgorithm<'a, S: SelectionMethod, C: CrossoverMethod<'a>, M: MutationMethod> {
     selection_method: S,
     crossover_method: C,
     mutation_method: M,
+    _marker: PhantomData<&'a C>,
 }
 
-impl<S, C, M> GeneticAlgorithm<S, C, M>
+impl<'a, S, C, M> GeneticAlgorithm<'a, S, C, M>
 where
     S: SelectionMethod,
-    C: CrossoverMethod,
+    C: CrossoverMethod<'a>,
     M: MutationMethod,
 {
     pub fn new(selection_method: S, crossover_method: C, mutation_method: M) -> Self {
@@ -28,12 +29,14 @@ where
             selection_method,
             crossover_method,
             mutation_method,
+            _marker: PhantomData,
         }
     }
 
-    pub fn evolve<I>(&self, rng: &PetriRand, population: &[I]) -> Option<Vec<I>>
+    pub fn evolve<I>(&'a self, rng: &'a PetriRand, population: &'a [I]) -> Option<Vec<I>>
     where
         I: Individual,
+        <C as crossover::CrossoverMethod<'a>>::Iterator: std::iter::Iterator<Item = f32>,
     {
         if population.is_empty() {
             return None;
@@ -63,8 +66,10 @@ where
                     .unwrap()
                     .chromosome();
 
-                let mut child = self.crossover_method.crossover(rng, parent_a, parent_b);
-                self.mutation_method.mutate(rng, &mut child);
+                let child = self.mutation_method.mutate(
+                    rng,
+                    self.crossover_method.crossover(rng, parent_a, parent_b),
+                );
 
                 I::create(child)
             })
@@ -87,6 +92,22 @@ mod genetic_algorithm {
         let chromosome = genes.iter().cloned().collect();
 
         TestIndividual::create(chromosome)
+    }
+
+    #[test]
+    fn crossover_and_mutate() {
+        let rng = PetriRand::with_seed(Default::default());
+        let crosser = UniformCrossover::new();
+        let mutator = GaussianMutation::new(0.5, 0.5);
+
+        let parent_a = individual(&[1.0, 2.0, 3.0, 4.0, 5.0]).chromosome().clone();
+        let parent_b = individual(&[-1.0, -2.0, -3.0, -4.0, -5.0]).chromosome().clone();
+
+        let child = mutator.mutate(&rng, crosser.crossover(&rng, &parent_a, &parent_b));
+
+        let expected_child = individual(&[1.0, 1.9195144, -2.9491906, 4.0, 5.0]).chromosome().clone();
+
+        assert_eq!(child, expected_child);
     }
 
     #[test]
@@ -160,10 +181,10 @@ mod genetic_algorithm {
         }
 
         let expected_population = vec![
-            individual(&[1.0694458, 2.1145113, 2.5693974]),
-            individual(&[1.3202493, 1.4779799, 2.8062222]),
-            individual(&[0.77012694, 1.9899592, 4.6764894]),
-            individual(&[1.4511783, 0.075871825, 2.8062222]),
+            individual(&[1.9979382, 1.6373904, 2.3867228]),
+            individual(&[2.3059247, 1.3087935, 2.5775788]),
+            individual(&[1.8600383, 1.6250226, 2.5775788]),
+            individual(&[1.8600383, 1.2199795, 2.2783923]),
         ];
 
         assert_eq!(population, expected_population);

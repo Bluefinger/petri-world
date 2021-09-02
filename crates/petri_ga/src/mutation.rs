@@ -3,7 +3,7 @@ use petri_rand::PetriRand;
 use crate::chromosome::Chromosome;
 
 pub trait MutationMethod {
-    fn mutate(&self, rng: &PetriRand, child: &mut Chromosome);
+    fn mutate(&self, rng: &PetriRand, child: impl Iterator<Item = f32>) -> Chromosome;
 }
 
 #[derive(Clone, Debug)]
@@ -28,13 +28,17 @@ impl GaussianMutation {
 }
 
 impl MutationMethod for GaussianMutation {
-    fn mutate(&self, rng: &PetriRand, child: &mut Chromosome) {
-        for gene in child.iter_mut() {
-            if rng.chance(self.chance as _) {
-                let sign = if rng.bool() { -1.0 } else { 1.0 };
-                *gene += sign * self.coeff * rng.get_f32();
-            }
-        }
+    fn mutate(&self, rng: &PetriRand, child: impl Iterator<Item = f32>) -> Chromosome {
+        child
+            .map(|gene| {
+                if rng.chance(self.chance as _) {
+                    let sign = if rng.bool() { -1.0 } else { 1.0 };
+                    gene + (sign * self.coeff * rng.get_f32())
+                } else {
+                    gene
+                }
+            })
+            .collect()
     }
 }
 
@@ -43,11 +47,11 @@ mod tests {
     use super::*;
 
     fn actual(chance: f32, coeff: f32) -> Vec<f32> {
-        let mut child = vec![1.0, 2.0, 3.0, 4.0, 5.0].into_iter().collect();
+        let child = vec![1.0, 2.0, 3.0, 4.0, 5.0].into_iter();
 
         let rng = PetriRand::with_seed(Default::default());
 
-        GaussianMutation::new(chance, coeff).mutate(&rng, &mut child);
+        let child = GaussianMutation::new(chance, coeff).mutate(&rng, child);
 
         child.into_iter().collect()
     }
