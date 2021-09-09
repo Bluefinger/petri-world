@@ -71,7 +71,7 @@ fn startup_system(
 fn creature_setup(mut commands: Commands, materials: Res<Materials>, sim: Res<Simulation>) {
     let rng = PetriRand::thread_local();
 
-    repeat_with(|| {
+    let creatures: Vec<CreatureBundle> = repeat_with(|| {
         let translation = Vec3::new(
             rng.get_f32() * sim.world.x,
             rng.get_f32() * sim.world.y,
@@ -94,15 +94,15 @@ fn creature_setup(mut commands: Commands, materials: Res<Materials>, sim: Res<Si
         }
     })
     .take(sim.creatures)
-    .for_each(|bundle| {
-        commands.spawn_bundle(bundle);
-    });
+    .collect();
+
+    commands.spawn_batch(creatures);
 }
 
 fn food_setup(mut commands: Commands, materials: Res<Materials>, sim: Res<Simulation>) {
     let rng = PetriRand::thread_local();
 
-    repeat_with(|| {
+    let food: Vec<FoodBundle> = repeat_with(|| {
         let translation = Vec3::new(
             rng.get_f32() * sim.world.x,
             rng.get_f32() * sim.world.y,
@@ -124,9 +124,9 @@ fn food_setup(mut commands: Commands, materials: Res<Materials>, sim: Res<Simula
         }
     })
     .take(sim.food)
-    .for_each(|bundle| {
-        commands.spawn_bundle(bundle);
-    });
+    .collect();
+
+    commands.spawn_batch(food);
 }
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq, StageLabel)]
