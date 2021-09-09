@@ -1,6 +1,12 @@
+use std::rc::Rc;
+
 use fastrand::*;
 
 const SCALE: f64 = 2.0 * (1u64 << 63) as f64;
+
+thread_local! {
+    static PETRI: Rc<PetriRand> = Rc::new(PetriRand::new());
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PetriRand {
@@ -11,6 +17,11 @@ impl PetriRand {
     #[inline]
     pub fn new() -> Self {
         Self { rng: Rng::new() }
+    }
+
+    #[inline]
+    pub fn thread_local() -> Rc<Self> {
+        PETRI.with(|t| t.clone())
     }
 
     #[inline]
