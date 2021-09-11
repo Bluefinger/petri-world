@@ -2,8 +2,9 @@
 
 use bevy::{core::FixedTimestep, prelude::*, render::camera::WindowOrigin};
 
-pub use crate::{creature::*, food::*, materials::*, simulation::*};
+pub use crate::{brain::*, eye::*, creature::*, food::*, materials::*, simulation::*};
 
+mod brain;
 mod eye;
 mod creature;
 mod food;
@@ -43,6 +44,7 @@ impl Plugin for SimulationPlugin {
                 SystemSet::new()
                     .with_run_criteria(FixedTimestep::step(SIM_UPDATE))
                     .with_system(detect_food_collisions.system())
+                    .with_system(creatures_thinking.system())
                     .with_system(move_creatures.system()),
             );
     }

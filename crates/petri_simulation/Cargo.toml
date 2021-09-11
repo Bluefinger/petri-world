@@ -8,3 +8,7 @@ edition = "2018"
 [dependencies]
 bevy = "0.5"
 petri_rand = { path = "../petri_rand" }
+petri_nn = { path = "../petri_nn" }
+
+[dev-dependencies]
+test-case = "1.2"

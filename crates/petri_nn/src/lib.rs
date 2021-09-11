@@ -2,11 +2,10 @@
 
 use petri_rand::*;
 use std::iter::{once, repeat, repeat_with};
-use std::slice::ArrayWindows;
 
 #[derive(Debug, Clone)]
-pub struct Network<'a> {
-    layers: ArrayWindows<'a, usize, 2>,
+pub struct Network {
+    layers: Vec<usize>,
     neurons: Vec<Neuron>,
 }
 
@@ -17,13 +16,14 @@ struct Neuron {
     weights: Vec<f32>,
 }
 
-impl<'a> Network<'a> {
-    pub fn random(rng: &PetriRand, topology: &'a [usize]) -> Self {
-        debug_assert!(topology.len() > 1);
+impl Network {
+    pub fn random(rng: &PetriRand, layers: Vec<usize>) -> Self {
+        debug_assert!(layers.len() > 1);
 
-        let layers = topology.array_windows();
+        //let layers = topology.array_windows();
 
         let neurons = layers
+            .array_windows()
             .flat_map(|&[input, output]| repeat(input).take(output))
             .map(|input| Neuron::random(rng, input))
             .collect();
@@ -32,19 +32,20 @@ impl<'a> Network<'a> {
     }
 
     pub fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
-        let (result, _) = self
-            .layers
-            .fold((inputs, 0), |(inputs, from), [_, output]| {
-                let to = from + output;
+        let (result, _) =
+            self.layers
+                .array_windows()
+                .fold((inputs, 0), |(inputs, from), [_, output]| {
+                    let to = from + output;
 
-                (
-                    self.neurons[from..to]
-                        .iter()
-                        .map(|neuron| neuron.propagate(&inputs))
-                        .collect(),
-                    to,
-                )
-            });
+                    (
+                        self.neurons[from..to]
+                            .iter()
+                            .map(|neuron| neuron.propagate(&inputs))
+                            .collect(),
+                        to,
+                    )
+                });
 
         result
     }
@@ -56,14 +57,15 @@ impl<'a> Network<'a> {
             .copied()
     }
 
-    pub fn from_weights(topology: &'a [usize], weights: impl IntoIterator<Item = f32>) -> Self {
-        debug_assert!(topology.len() > 1);
+    pub fn from_weights(layers: Vec<usize>, weights: impl IntoIterator<Item = f32>) -> Self {
+        debug_assert!(layers.len() > 1);
 
-        let layers = topology.array_windows();
+        //let layers = topology.array_windows();
 
         let mut weights = weights.into_iter();
 
         let neurons = layers
+            .array_windows()
             .flat_map(|&[input, output]| repeat(input).take(output))
             .map(|input| Neuron::from_weights(input, &mut weights))
             .collect();
@@ -193,22 +195,22 @@ mod tests {
 
         #[test]
         fn random() {
-            let topology = [4, 2];
+            let topology = vec![4, 2];
             let rng = PetriRand::with_seed(Default::default());
 
-            let network = Network::random(&rng, &topology);
+            let network = Network::random(&rng, topology);
 
-            assert_eq!(network.layers.len(), 1);
+            assert_eq!(network.layers.len(), 2);
             assert_eq!(network.neurons[0].weights.len(), 4);
         }
 
         #[test]
         fn propagate() {
             let inputs = vec![0.5, 1.0, 0.75];
-            let layers = [3, 2, 1];
+            let layers = vec![3, 2, 1];
 
             let network = Network {
-                layers: layers.array_windows(),
+                layers,
                 neurons: vec![
                     Neuron {
                         bias: 0.5,
@@ -242,9 +244,9 @@ mod tests {
 
         #[test]
         fn weights() {
-            let layers = [2, 1];
+            let layers = vec![2, 1];
             let network = Network {
-                layers: layers.array_windows(),
+                layers: layers,
                 neurons: vec![Neuron {
                     bias: 0.5,
                     coefficient: 0.1,
@@ -263,10 +265,10 @@ mod tests {
 
         #[test]
         fn from_weights() {
-            let topology = [4, 1];
+            let topology = vec![4, 1];
             let weights: Vec<f32> = vec![0.5, 0.1, 0.9, -0.3, 0.2, -0.1];
 
-            let network = Network::from_weights(&topology, weights);
+            let network = Network::from_weights(topology, weights);
 
             assert_eq!(network.neurons.len(), 1);
             assert_relative_eq!(network.neurons[0].bias, 0.5);
