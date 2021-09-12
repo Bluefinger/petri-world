@@ -10,8 +10,8 @@ pub struct Creature;
 
 #[derive(Debug, Default)]
 pub struct Control {
-    pub vector: Vec3,
-    pub rotation: Quat,
+    pub speed: f32,
+    pub rotation: f32,
 }
 
 #[derive(Debug, Default)]

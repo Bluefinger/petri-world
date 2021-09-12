@@ -261,7 +261,7 @@ mod tests {
         fn weights() {
             let layers = vec![2, 1];
             let network = Network {
-                layers: layers,
+                layers,
                 neurons: vec![Neuron {
                     bias: 0.5,
                     coefficient: 0.1,

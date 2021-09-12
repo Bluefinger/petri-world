@@ -26,7 +26,7 @@ pub(crate) fn simulation_setup(mut commands: Commands) {
         world: Vec2::splat(800.0),
         creatures: 40,
         food: 60,
-        limit: 2500,
+        limit: 2000,
         step: 0,
         ga: GeneticAlgorithm::new(
             RouletteWheelSelection::new(),
@@ -47,7 +47,7 @@ pub(crate) fn detect_food_collisions(
         for mut food in q_food.iter_mut() {
             let distance = creature.translation.distance(food.translation);
 
-            if distance < 6.0 {
+            if distance < 7.0 {
                 fitness.score += 1.0;
 
                 food.translation =
@@ -68,12 +68,9 @@ pub(crate) fn creatures_thinking(
 
         let speed = vision[0].clamp(-SPEED_ACCEL, SPEED_ACCEL);
 
-        control.vector = Vec3::new(
-            (control.vector.x + speed).clamp(SPEED_MIN, SPEED_MAX),
-            0.0,
-            0.0,
-        );
-        control.rotation = Quat::from_rotation_z(control.rotation.z + vision[1].clamp(-ROTATION_ACCEL, ROTATION_ACCEL));
+        control.speed = (control.speed + speed).clamp(SPEED_MIN, SPEED_MAX);
+
+        control.rotation += vision[1].clamp(-ROTATION_ACCEL, ROTATION_ACCEL);
     }
 }
 
@@ -82,8 +79,9 @@ pub(crate) fn move_creatures(
     mut sim: ResMut<Simulation>,
 ) {
     for (mut transform, control, _) in creatures.iter_mut() {
-        transform.rotation = control.rotation;
-        transform.translation += control.rotation.mul_vec3(control.vector);
+        let rot = Quat::from_rotation_z(control.rotation);
+        transform.rotation = rot;
+        transform.translation += rot.mul_vec3(Vec3::new(control.speed, 0.0, 0.0));
         transform.translation.x = wrap(transform.translation.x, 0.0, sim.world.x);
         transform.translation.y = wrap(transform.translation.y, 0.0, sim.world.y);
     }
