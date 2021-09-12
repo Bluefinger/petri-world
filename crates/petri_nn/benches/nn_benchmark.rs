@@ -3,8 +3,6 @@ use petri_nn::*;
 use petri_rand::*;
 use std::iter::repeat_with;
 
-// [0.5, 0.1, -0.3, 0.8, 0.1, 0.2, 0.5, 0.1, -0.3, -0.8, -0.1, 0.2, 0.5, 0.1, 0.4, -0.2, 0.5, 0.1, 0.4, -0.2, 0.5, 0.1, 0.4, -0.2]
-
 pub fn init_benchmark(c: &mut Criterion) {
     c.bench_function("petri-nn random 10/30/10/5", |b| {
         let rng = PetriRand::new();
@@ -22,7 +20,7 @@ pub fn propagate_benchmark(c: &mut Criterion) {
     });
     c.bench_function("petri-nn propagate 15/30/5", |b| {
         let rng = PetriRand::new();
-        let inputs: Vec<_> = repeat_with(|| rng.get_f32_normalised()).take(10).collect();
+        let inputs: Vec<_> = repeat_with(|| rng.get_f32_normalised()).take(15).collect();
         let nn = Network::random(&rng, vec![15, 30, 5]);
         b.iter(|| nn.propagate(black_box(inputs.to_vec())));
     });
@@ -49,13 +47,6 @@ pub fn weights_benchmark(c: &mut Criterion) {
         b.iter(|| Network::from_weights(black_box(topology.clone()), black_box(weights.clone())));
     });
 }
-
-// pub fn weights_benchmark(c: &mut Criterion) {
-//     let mut rng = thread_rng();
-//     let mut inputs = [0.0; 10];
-//     rng.fill(&mut inputs);
-// }
-// pub fn from_weights_benchmark() {}
 
 criterion_group!(benches, propagate_benchmark, weights_benchmark, init_benchmark);
 criterion_main!(benches);

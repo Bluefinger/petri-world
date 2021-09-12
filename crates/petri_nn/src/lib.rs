@@ -73,8 +73,6 @@ impl Network {
     pub fn from_weights(layers: Vec<usize>, weights: impl IntoIterator<Item = f32>) -> Self {
         debug_assert!(layers.len() > 1);
 
-        //let layers = topology.array_windows();
-
         let mut weights = weights.into_iter();
 
         let neurons = layers
