@@ -20,8 +20,6 @@ impl Network {
     pub fn random(rng: &PetriRand, layers: Vec<usize>) -> Self {
         debug_assert!(layers.len() > 1);
 
-        //let layers = topology.array_windows();
-
         let neurons = layers
             .array_windows()
             .flat_map(|&[input, output]| repeat(input).take(output))

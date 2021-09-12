@@ -7,8 +7,8 @@ use petri_ga::{GaussianMutation, GeneticAlgorithm, RouletteWheelSelection, Unifo
 use petri_rand::PetriRand;
 
 const SPEED_MIN: f32 = 0.1;
-const SPEED_MAX: f32 = 3.0;
-const SPEED_ACCEL: f32 = 0.2;
+const SPEED_MAX: f32 = 6.0;
+const SPEED_ACCEL: f32 = 0.5;
 const ROTATION_ACCEL: f32 = FRAC_PI_4;
 
 #[derive(Debug)]
@@ -66,11 +66,15 @@ pub(crate) fn creatures_thinking(
 
         let vision = brain.nn.propagate(vision);
 
-        let speed = vision[0].clamp(-SPEED_ACCEL, SPEED_ACCEL);
+        let r0 = vision[0].clamp(0.0, 1.0) - 0.5;
+        let r1 = vision[1].clamp(0.0, 1.0) - 0.5;
+        let r2 = vision[2].clamp(0.0, 1.0) - 0.5;
+
+        let speed = r1.clamp(-SPEED_ACCEL, SPEED_ACCEL);
 
         control.speed = (control.speed + speed).clamp(SPEED_MIN, SPEED_MAX);
 
-        control.rotation += vision[1].clamp(-ROTATION_ACCEL, ROTATION_ACCEL);
+        control.rotation += (r0 - r2).clamp(-ROTATION_ACCEL, ROTATION_ACCEL);
     }
 }
 
@@ -125,4 +129,19 @@ pub(crate) fn evolve_creatures(
     );
 
     sim.step = 0;
+}
+
+pub(crate) fn randomise_food(
+    mut foods: Query<&mut Transform, (With<Food>, Without<Creature>)>,
+    sim: Res<Simulation>,
+) {
+    let rng = PetriRand::thread_local();
+
+    for mut food in foods.iter_mut() {
+        food.translation = Vec3::new(
+            rng.get_f32() * sim.world.x,
+            rng.get_f32() * sim.world.y,
+            0.0,
+        );
+    }
 }

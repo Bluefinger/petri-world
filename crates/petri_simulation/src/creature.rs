@@ -56,7 +56,7 @@ pub fn creature_setup(mut commands: Commands, materials: Res<Materials>, sim: Re
             control: Default::default(),
             fitness: Default::default(),
             eye: Eye { fov_range: 200.0, fov_angle: FRAC_2_PI, cells: 11 },
-            brain: Brain { nn: Network::random(&rng, vec![11, 22, 11, 2]) },
+            brain: Brain { nn: Network::random(&rng, vec![11, 22, 11, 6, 3]) },
         }
     })
     .take(sim.creatures)

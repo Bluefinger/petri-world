@@ -56,7 +56,8 @@ impl Plugin for SimulationPlugin {
                     .label("evolving")
                     .after("running")
                     .with_run_criteria(evolve_when_ready.system())
-                    .with_system(evolve_creatures.system()),
+                    .with_system(evolve_creatures.system())
+                    .with_system(randomise_food.system()),
             );
     }
 }

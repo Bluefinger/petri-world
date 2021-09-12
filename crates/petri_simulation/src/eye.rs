@@ -134,10 +134,6 @@ impl Eye {
 
             let (_, angle) = transform.rotation.to_axis_angle();
 
-            //let angle = transform.rotation.z * transform.rotation.w;
-
-            // println!("compare {:?} {:?} {:?}", direction, angle, transform.rotation.x);
-
             let angle = wrap(vec_angle - angle, -PI, PI);
 
             if angle < -self.fov_angle / 2.0 || angle > self.fov_angle / 2.0 {
@@ -166,14 +162,6 @@ impl Default for Eye {
         Eye::new(FOV_RANGE, FOV_ANGLE, CELLS)
     }
 }
-
-// pub fn process_vision(
-//     q_food: Query<&Transform, (With<Food>, Without<Creature>)>,
-//     mut q_creatures: Query<(&mut Transform, &Eye), (With<Creature>, Without<Food>)>,
-//     sim: Res<Simulation>,
-// ) {
-//     todo!()
-// }
 
 #[cfg(test)]
 mod tests {
