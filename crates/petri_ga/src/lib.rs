@@ -11,6 +11,7 @@ use std::{iter::repeat_with, marker::PhantomData};
 
 pub use crate::{chromosome::*, crossover::*, individual::*, mutation::*, selection::*};
 
+#[derive(Debug)]
 pub struct GeneticAlgorithm<'a, S: SelectionMethod, C: CrossoverMethod<'a>, M: MutationMethod> {
     selection_method: S,
     crossover_method: C,

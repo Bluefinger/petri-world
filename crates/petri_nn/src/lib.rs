@@ -57,6 +57,21 @@ impl Network {
             .copied()
     }
 
+    pub fn adjust_weights(&mut self, weights: impl IntoIterator<Item = f32>) {
+        let mut weights = weights.into_iter();
+
+        self.neurons = self
+            .layers
+            .array_windows()
+            .flat_map(|&[input, output]| repeat(input).take(output))
+            .map(|input| Neuron::from_weights(input, &mut weights))
+            .collect();
+
+        if weights.next().is_some() {
+            panic!("Too many weights given");
+        }
+    }
+
     pub fn from_weights(layers: Vec<usize>, weights: impl IntoIterator<Item = f32>) -> Self {
         debug_assert!(layers.len() > 1);
 

@@ -1,12 +1,14 @@
 #![allow(clippy::type_complexity)]
+#![feature(type_alias_impl_trait)]
 
 use bevy::{core::FixedTimestep, prelude::*, render::camera::WindowOrigin};
 
-pub use crate::{brain::*, eye::*, creature::*, food::*, materials::*, simulation::*};
+pub use crate::{brain::*, creature::*, creature_individual::*, eye::*, food::*, materials::*, simulation::*};
 
 mod brain;
-mod eye;
 mod creature;
+mod creature_individual;
+mod eye;
 mod food;
 mod materials;
 mod simulation;
@@ -42,10 +44,19 @@ impl Plugin for SimulationPlugin {
             )
             .add_system_set(
                 SystemSet::new()
+                    .label("running")
+                    .before("evolving")
                     .with_run_criteria(FixedTimestep::step(SIM_UPDATE))
-                    .with_system(detect_food_collisions.system())
-                    .with_system(creatures_thinking.system())
-                    .with_system(move_creatures.system()),
+                    .with_system(detect_food_collisions.system().label("detect"))
+                    .with_system(creatures_thinking.system().label("thinking").after("detect"))
+                    .with_system(move_creatures.system().label("move").after("thinking")),
+            )
+            .add_system_set(
+                SystemSet::new()
+                    .label("evolving")
+                    .after("running")
+                    .with_run_criteria(evolve_when_ready.system())
+                    .with_system(evolve_creatures.system()),
             );
     }
 }

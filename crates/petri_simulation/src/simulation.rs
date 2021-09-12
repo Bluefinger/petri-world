@@ -1,26 +1,38 @@
-use std::f32::consts::FRAC_PI_2;
+use std::f32::consts::{FRAC_PI_4, PI};
 
 use crate::utils::*;
 use crate::*;
+use bevy::ecs::schedule::ShouldRun;
+use petri_ga::{GaussianMutation, GeneticAlgorithm, RouletteWheelSelection, UniformCrossover};
 use petri_rand::PetriRand;
 
-#[derive(Debug, Default)]
+const SPEED_MIN: f32 = 0.1;
+const SPEED_MAX: f32 = 3.0;
+const SPEED_ACCEL: f32 = 0.2;
+const ROTATION_ACCEL: f32 = FRAC_PI_4;
+
+#[derive(Debug)]
 pub struct Simulation {
     pub world: Vec2,
     pub creatures: usize,
     pub food: usize,
+    pub limit: usize,
+    pub step: usize,
+    pub ga: GeneticAlgorithm<'static, RouletteWheelSelection, UniformCrossover, GaussianMutation>,
 }
-
-const SPEED_MIN: f32 = 0.1;
-const SPEED_MAX: f32 = 2.0;
-const SPEED_ACCEL: f32 = 0.2;
-const ROTATION_ACCEL: f32 = FRAC_PI_2;
 
 pub(crate) fn simulation_setup(mut commands: Commands) {
     commands.insert_resource(Simulation {
         world: Vec2::splat(800.0),
         creatures: 40,
         food: 60,
+        limit: 2500,
+        step: 0,
+        ga: GeneticAlgorithm::new(
+            RouletteWheelSelection::new(),
+            UniformCrossover::new(),
+            GaussianMutation::new(0.01, 0.3),
+        ),
     });
 }
 
@@ -61,18 +73,58 @@ pub(crate) fn creatures_thinking(
             0.0,
             0.0,
         );
-        control.rotation = Quat::from_rotation_z(vision[1].clamp(-ROTATION_ACCEL, ROTATION_ACCEL));
+        control.rotation = Quat::from_rotation_z(control.rotation.z + vision[1].clamp(-ROTATION_ACCEL, ROTATION_ACCEL));
     }
 }
 
 pub(crate) fn move_creatures(
     mut creatures: Query<(&mut Transform, &Control, With<Creature>)>,
-    sim: Res<Simulation>,
+    mut sim: ResMut<Simulation>,
 ) {
     for (mut transform, control, _) in creatures.iter_mut() {
-        transform.rotation =  control.rotation;
+        transform.rotation = control.rotation;
         transform.translation += control.rotation.mul_vec3(control.vector);
         transform.translation.x = wrap(transform.translation.x, 0.0, sim.world.x);
         transform.translation.y = wrap(transform.translation.y, 0.0, sim.world.y);
     }
+
+    sim.step += 1;
+}
+
+pub(crate) fn evolve_when_ready(sim: Res<Simulation>) -> ShouldRun {
+    if sim.step == sim.limit {
+        ShouldRun::Yes
+    } else {
+        ShouldRun::No
+    }
+}
+
+pub(crate) fn evolve_creatures(
+    mut creatures: Query<(&mut Brain, &mut Fitness, &mut Transform), With<Creature>>,
+    mut sim: ResMut<Simulation>,
+) {
+    let population: Vec<CreatureIndividual> = creatures
+        .iter_mut()
+        .map(|(brain, fitness, _)| CreatureIndividual::from_creature(&brain, &fitness))
+        .collect();
+
+    let rng = PetriRand::thread_local();
+
+    let new_population = sim.ga.evolve(&rng, &population).unwrap();
+
+    creatures.iter_mut().zip(new_population).for_each(
+        |((mut brain, mut fitness, mut transform), individual)| {
+            fitness.score = 0.0;
+            brain.nn.adjust_weights(individual);
+
+            transform.translation = Vec3::new(
+                rng.get_f32() * sim.world.x,
+                rng.get_f32() * sim.world.y,
+                1.0,
+            );
+            transform.rotation = Quat::from_rotation_z(rng.get_f32() * 2.0 * PI);
+        },
+    );
+
+    sim.step = 0;
 }

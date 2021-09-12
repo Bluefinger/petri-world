@@ -10,6 +10,7 @@ pub trait SelectionMethod {
         F: Fn(&I) -> f32;
 }
 
+#[derive(Debug)]
 pub struct RouletteWheelSelection;
 
 impl RouletteWheelSelection {

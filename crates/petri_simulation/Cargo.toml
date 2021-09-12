@@ -9,6 +9,7 @@ edition = "2018"
 bevy = "0.5"
 petri_rand = { path = "../petri_rand" }
 petri_nn = { path = "../petri_nn" }
+petri_ga = { path = "../petri_ga" }
 
 [dev-dependencies]
 test-case = "1.2"
