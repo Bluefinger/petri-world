@@ -2,8 +2,9 @@ use std::f32::consts::{FRAC_PI_4, PI};
 
 use crate::utils::*;
 use crate::*;
-use bevy::ecs::schedule::ShouldRun;
+use bevy::{ecs::schedule::ShouldRun, tasks::ComputeTaskPool};
 use petri_ga::{GaussianMutation, GeneticAlgorithm, RouletteWheelSelection, UniformCrossover};
+use petri_nn::Network;
 use petri_rand::PetriRand;
 
 const SPEED_MIN: f32 = 0.1;
@@ -58,24 +59,28 @@ pub(crate) fn detect_food_collisions(
 }
 
 pub(crate) fn creatures_thinking(
-    mut creatures: Query<(&Transform, &mut Control, &Eye, &Brain), (With<Creature>, Without<Food>)>,
+    mut creatures: Query<
+        (&Transform, &mut Control, &Eye, &Network),
+        (With<Creature>, Without<Food>),
+    >,
     food: Query<&Transform, (With<Food>, Without<Creature>)>,
+    pool: Res<ComputeTaskPool>,
 ) {
-    for (creature, mut control, eye, brain) in creatures.iter_mut() {
+    creatures.par_for_each_mut(&pool, 10, |(creature, mut control, eye, brain)| {
         let vision = eye.perceive(creature, food.iter());
 
-        let vision = brain.nn.propagate(vision);
+        let vision = brain.propagate(vision);
 
-        let r0 = vision[0].clamp(0.0, 1.0) - 0.5;
+        let r0 = vision[0].clamp(0.0, 1.0);
         let r1 = vision[1].clamp(0.0, 1.0) - 0.5;
-        let r2 = vision[2].clamp(0.0, 1.0) - 0.5;
+        let r2 = vision[2].clamp(0.0, 1.0);
 
         let speed = r1.clamp(-SPEED_ACCEL, SPEED_ACCEL);
 
         control.speed = (control.speed + speed).clamp(SPEED_MIN, SPEED_MAX);
 
         control.rotation += (r0 - r2).clamp(-ROTATION_ACCEL, ROTATION_ACCEL);
-    }
+    });
 }
 
 pub(crate) fn move_creatures(
@@ -102,7 +107,7 @@ pub(crate) fn evolve_when_ready(sim: Res<Simulation>) -> ShouldRun {
 }
 
 pub(crate) fn evolve_creatures(
-    mut creatures: Query<(&mut Brain, &mut Fitness, &mut Transform), With<Creature>>,
+    mut creatures: Query<(&mut Network, &mut Fitness, &mut Transform), With<Creature>>,
     mut sim: ResMut<Simulation>,
 ) {
     let population: Vec<CreatureIndividual> = creatures
@@ -117,7 +122,7 @@ pub(crate) fn evolve_creatures(
     creatures.iter_mut().zip(new_population).for_each(
         |((mut brain, mut fitness, mut transform), individual)| {
             fitness.score = 0.0;
-            brain.nn.adjust_weights(individual);
+            brain.adjust_weights(individual);
 
             transform.translation = Vec3::new(
                 rng.get_f32() * sim.world.x,

@@ -1,4 +1,5 @@
 use petri_ga::{Chromosome, Individual};
+use petri_nn::Network;
 
 use crate::*;
 
@@ -9,10 +10,10 @@ pub struct CreatureIndividual {
 }
 
 impl CreatureIndividual {
-    pub fn from_creature(brain: &Brain, fitness: &Fitness) -> Self {
+    pub fn from_creature(brain: &Network, fitness: &Fitness) -> Self {
         Self {
             fitness: fitness.score,
-            chromosome: brain.nn.weights().collect(),
+            chromosome: brain.weights().collect(),
         }
     }
 }

@@ -1,9 +1,12 @@
-use std::{f32::consts::{FRAC_2_PI, PI}, iter::repeat_with};
+use std::{
+    f32::consts::{FRAC_2_PI, PI},
+    iter::repeat_with,
+};
 
+use crate::{materials::Materials, simulation::Simulation, Eye};
 use bevy::prelude::*;
 use petri_nn::Network;
 use petri_rand::PetriRand;
-use crate::{Brain, Eye, materials::Materials, simulation::Simulation};
 
 #[derive(Debug, Default)]
 pub struct Creature;
@@ -24,7 +27,7 @@ pub struct CreatureBundle {
     pub creature: Creature,
     pub control: Control,
     pub eye: Eye,
-    pub brain: Brain,
+    pub brain: Network,
     pub fitness: Fitness,
     #[bundle]
     pub sprite: SpriteBundle,
@@ -55,8 +58,12 @@ pub fn creature_setup(mut commands: Commands, materials: Res<Materials>, sim: Re
             },
             control: Default::default(),
             fitness: Default::default(),
-            eye: Eye { fov_range: 200.0, fov_angle: FRAC_2_PI, cells: 11 },
-            brain: Brain { nn: Network::random(&rng, vec![11, 22, 11, 6, 3]) },
+            eye: Eye {
+                fov_range: 200.0,
+                fov_angle: FRAC_2_PI,
+                cells: 11,
+            },
+            brain: Network::random(&rng, vec![11, 22, 11, 6, 3]),
         }
     })
     .take(sim.creatures)

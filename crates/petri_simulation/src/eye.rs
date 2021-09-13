@@ -116,7 +116,11 @@ impl Eye {
         }
     }
 
-    pub fn perceive<'a>(&self, transform: &Transform, targets: impl Iterator<Item = &'a Transform>) -> Vec<f32> {
+    pub fn perceive<'a>(
+        &self,
+        transform: &Transform,
+        targets: impl Iterator<Item = &'a Transform>,
+    ) -> Vec<f32> {
         let mut cells = vec![0.0; self.cells];
 
         let x = Vec2::new(1.0, 0.0);

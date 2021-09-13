@@ -3,9 +3,8 @@
 
 use bevy::{core::FixedTimestep, prelude::*, render::camera::WindowOrigin};
 
-pub use crate::{brain::*, creature::*, creature_individual::*, eye::*, food::*, materials::*, simulation::*};
+pub use crate::{creature::*, creature_individual::*, eye::*, food::*, materials::*, simulation::*};
 
-mod brain;
 mod creature;
 mod creature_individual;
 mod eye;

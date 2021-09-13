@@ -1,8 +1,7 @@
 use std::iter::repeat_with;
 
-use bevy::prelude::*;
-use petri_rand::PetriRand;
 use crate::*;
+use petri_rand::PetriRand;
 
 #[derive(Debug, Default)]
 pub struct Food;
