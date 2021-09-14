@@ -17,9 +17,17 @@ pub struct Simulation {
     pub world: Vec2,
     pub creatures: usize,
     pub food: usize,
+}
+
+#[derive(Debug, Default)]
+pub struct Lifecycle {
     pub limit: usize,
     pub step: usize,
-    pub ga: GeneticAlgorithm<'static, RouletteWheelSelection, UniformCrossover, GaussianMutation>,
+}
+
+#[derive(Debug)]
+pub struct Evolver {
+    ga: GeneticAlgorithm<'static, RouletteWheelSelection, UniformCrossover, GaussianMutation>,
 }
 
 pub(crate) fn simulation_setup(mut commands: Commands) {
@@ -27,13 +35,19 @@ pub(crate) fn simulation_setup(mut commands: Commands) {
         world: Vec2::splat(800.0),
         creatures: 40,
         food: 60,
-        limit: 2000,
-        step: 0,
+    });
+
+    commands.insert_resource(Evolver {
         ga: GeneticAlgorithm::new(
             RouletteWheelSelection::new(),
             UniformCrossover::new(),
             GaussianMutation::new(0.01, 0.3),
         ),
+    });
+
+    commands.insert_resource(Lifecycle {
+        limit: 2000,
+        step: 0
     });
 }
 
@@ -85,7 +99,8 @@ pub(crate) fn creatures_thinking(
 
 pub(crate) fn move_creatures(
     mut creatures: Query<(&mut Transform, &Control, With<Creature>)>,
-    mut sim: ResMut<Simulation>,
+    mut lifecycle: ResMut<Lifecycle>,
+    sim: Res<Simulation>,
 ) {
     for (mut transform, control, _) in creatures.iter_mut() {
         let rot = Quat::from_rotation_z(control.rotation);
@@ -95,11 +110,11 @@ pub(crate) fn move_creatures(
         transform.translation.y = wrap(transform.translation.y, 0.0, sim.world.y);
     }
 
-    sim.step += 1;
+    lifecycle.step += 1;
 }
 
-pub(crate) fn evolve_when_ready(sim: Res<Simulation>) -> ShouldRun {
-    if sim.step == sim.limit {
+pub(crate) fn evolve_when_ready(lifecycle: Res<Lifecycle>) -> ShouldRun {
+    if lifecycle.step == lifecycle.limit {
         ShouldRun::Yes
     } else {
         ShouldRun::No
@@ -108,7 +123,9 @@ pub(crate) fn evolve_when_ready(sim: Res<Simulation>) -> ShouldRun {
 
 pub(crate) fn evolve_creatures(
     mut creatures: Query<(&mut Network, &mut Fitness, &mut Transform), With<Creature>>,
-    mut sim: ResMut<Simulation>,
+    mut lifecycle: ResMut<Lifecycle>,
+    sim: Res<Simulation>,
+    evolver: Res<Evolver>,
 ) {
     let population: Vec<CreatureIndividual> = creatures
         .iter_mut()
@@ -117,7 +134,7 @@ pub(crate) fn evolve_creatures(
 
     let rng = PetriRand::thread_local();
 
-    let new_population = sim.ga.evolve(&rng, &population).unwrap();
+    let new_population = evolver.ga.evolve(&rng, &population).unwrap();
 
     creatures.iter_mut().zip(new_population).for_each(
         |((mut brain, mut fitness, mut transform), individual)| {
@@ -133,7 +150,7 @@ pub(crate) fn evolve_creatures(
         },
     );
 
-    sim.step = 0;
+    lifecycle.step = 0;
 }
 
 pub(crate) fn randomise_food(
