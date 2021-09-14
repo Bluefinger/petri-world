@@ -18,7 +18,7 @@ impl StatisticsBuilder {
         }
     }
 
-    pub fn add<I>(&mut self, individual: &I)
+    pub fn add_sample<I>(mut self, individual: &I) -> Self
     where
         I: Individual,
     {
@@ -28,6 +28,18 @@ impl StatisticsBuilder {
         self.max_fitness = self.max_fitness.max(fitness);
         self.sum_fitness += fitness;
         self.total_samples += 1;
+
+        self
+    }
+
+    pub fn from_population<I>(population: &[I]) -> Statistics
+    where
+        I: Individual,
+    {
+        population
+            .iter()
+            .fold(StatisticsBuilder::default(), |stats, individual| stats.add_sample(individual))
+            .build()
     }
 
     pub fn build(self) -> Statistics {
@@ -55,19 +67,23 @@ pub struct Statistics {
 }
 
 impl Statistics {
-    pub fn min_fitness(&self) -> f32 {
-        self.min_fitness
+    pub fn min_fitness(&self) -> &f32 {
+        &self.min_fitness
     }
 
-    pub fn max_fitness(&self) -> f32 {
-        self.max_fitness
+    pub fn max_fitness(&self) -> &f32 {
+        &self.max_fitness
     }
 
-    pub fn avg_fitness(&self) -> f32 {
-        self.avg_fitness
+    pub fn avg_fitness(&self) -> &f32 {
+        &self.avg_fitness
     }
 
-    pub fn total_fitness(&self) -> f32 {
-        self.total_fitness
+    pub fn total_fitness(&self) -> &f32 {
+        &self.total_fitness
+    }
+
+    pub fn has_no_fitness(&self) -> bool {
+        self.total_fitness == 0.0
     }
 }

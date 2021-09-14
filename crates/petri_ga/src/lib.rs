@@ -50,17 +50,14 @@ where
             return None;
         }
 
-        let mut stats = StatisticsBuilder::default();
+        let stats = StatisticsBuilder::from_population(population);
 
-        population.iter().for_each(|individual| stats.add(individual));
-
-        let stats = stats.build();
-
-        if stats.total_fitness() == 0.0 {
+        if stats.has_no_fitness() {
             return None;
         }
 
-        let selection_chance = |individual: &I| -> f32 { individual.fitness() / stats.total_fitness() };
+        let selection_chance =
+            |individual: &I| -> f32 { individual.fitness() / stats.total_fitness() };
 
         let new_population = repeat_with(|| {
             let parent_a = self
