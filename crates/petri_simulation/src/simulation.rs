@@ -3,7 +3,9 @@ use std::f32::consts::{FRAC_PI_4, PI};
 use crate::utils::*;
 use crate::*;
 use bevy::{ecs::schedule::ShouldRun, tasks::ComputeTaskPool};
-use petri_ga::{GaussianMutation, GeneticAlgorithm, RouletteWheelSelection, UniformCrossover};
+use petri_ga::{
+    GaussianMutation, GeneticAlgorithm, RouletteWheelSelection, Statistics, UniformCrossover,
+};
 use petri_nn::Network;
 use petri_rand::PetriRand;
 
@@ -47,7 +49,7 @@ pub(crate) fn simulation_setup(mut commands: Commands) {
 
     commands.insert_resource(Lifecycle {
         limit: 2000,
-        step: 0
+        step: 0,
     });
 }
 
@@ -126,7 +128,7 @@ pub(crate) fn evolve_creatures(
     mut lifecycle: ResMut<Lifecycle>,
     sim: Res<Simulation>,
     evolver: Res<Evolver>,
-) {
+) -> Statistics {
     let population: Vec<CreatureIndividual> = creatures
         .iter_mut()
         .map(|(brain, fitness, _)| CreatureIndividual::from_creature(&brain, &fitness))
@@ -134,7 +136,7 @@ pub(crate) fn evolve_creatures(
 
     let rng = PetriRand::thread_local();
 
-    let new_population = evolver.ga.evolve(&rng, &population).unwrap();
+    let (new_population, stats) = evolver.ga.evolve(&rng, &population).unwrap();
 
     creatures.iter_mut().zip(new_population).for_each(
         |((mut brain, mut fitness, mut transform), individual)| {
@@ -151,6 +153,8 @@ pub(crate) fn evolve_creatures(
     );
 
     lifecycle.step = 0;
+    
+    stats
 }
 
 pub(crate) fn randomise_food(
@@ -166,4 +170,13 @@ pub(crate) fn randomise_food(
             0.0,
         );
     }
+}
+
+pub(crate) fn log_stats(In(stats): In<Statistics>) {
+    info!(
+        "Evolution fitness score: MIN ({:?}); MAX ({:?}); AVG ({:?})",
+        stats.min_fitness(),
+        stats.max_fitness(),
+        stats.avg_fitness()
+    );
 }

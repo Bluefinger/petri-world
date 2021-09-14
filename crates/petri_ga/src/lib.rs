@@ -5,11 +5,14 @@ mod crossover;
 mod individual;
 mod mutation;
 mod selection;
+mod statistics;
 
 use petri_rand::PetriRand;
 use std::{iter::repeat_with, marker::PhantomData};
 
-pub use crate::{chromosome::*, crossover::*, individual::*, mutation::*, selection::*};
+pub use crate::{
+    chromosome::*, crossover::*, individual::*, mutation::*, selection::*, statistics::*,
+};
 
 #[derive(Debug)]
 pub struct GeneticAlgorithm<'a, S: SelectionMethod, C: CrossoverMethod<'a>, M: MutationMethod> {
@@ -34,7 +37,11 @@ where
         }
     }
 
-    pub fn evolve<I>(&'a self, rng: &'a PetriRand, population: &'a [I]) -> Option<Vec<I>>
+    pub fn evolve<I>(
+        &'a self,
+        rng: &'a PetriRand,
+        population: &'a [I],
+    ) -> Option<(Vec<I>, Statistics)>
     where
         I: Individual,
         <C as crossover::CrossoverMethod<'a>>::Iterator: std::iter::Iterator<Item = f32>,
@@ -43,40 +50,41 @@ where
             return None;
         }
 
-        let total_fitness: f32 = population
-            .iter()
-            .map(|individual| individual.fitness())
-            .sum();
+        let mut stats = StatisticsBuilder::default();
 
-        if total_fitness == 0.0 {
+        population.iter().for_each(|individual| stats.add(individual));
+
+        let stats = stats.build();
+
+        if stats.total_fitness() == 0.0 {
             return None;
         }
 
-        let selection_chance = |individual: &I| -> f32 { individual.fitness() / total_fitness };
+        let selection_chance = |individual: &I| -> f32 { individual.fitness() / stats.total_fitness() };
 
-        Some(
-            repeat_with(|| {
-                let parent_a = self
-                    .selection_method
-                    .select(rng, population, selection_chance)
-                    .unwrap()
-                    .chromosome();
-                let parent_b = self
-                    .selection_method
-                    .select(rng, population, selection_chance)
-                    .unwrap()
-                    .chromosome();
+        let new_population = repeat_with(|| {
+            let parent_a = self
+                .selection_method
+                .select(rng, population, selection_chance)
+                .unwrap()
+                .chromosome();
+            let parent_b = self
+                .selection_method
+                .select(rng, population, selection_chance)
+                .unwrap()
+                .chromosome();
 
-                let child = self.mutation_method.mutate(
-                    rng,
-                    self.crossover_method.crossover(rng, parent_a, parent_b),
-                );
+            let child = self.mutation_method.mutate(
+                rng,
+                self.crossover_method.crossover(rng, parent_a, parent_b),
+            );
 
-                I::create(child)
-            })
-            .take(population.len())
-            .collect(),
-        )
+            I::create(child)
+        })
+        .take(population.len())
+        .collect();
+
+        Some((new_population, stats))
     }
 }
 
@@ -102,11 +110,15 @@ mod genetic_algorithm {
         let mutator = GaussianMutation::new(0.5, 0.5);
 
         let parent_a = individual(&[1.0, 2.0, 3.0, 4.0, 5.0]).chromosome().clone();
-        let parent_b = individual(&[-1.0, -2.0, -3.0, -4.0, -5.0]).chromosome().clone();
+        let parent_b = individual(&[-1.0, -2.0, -3.0, -4.0, -5.0])
+            .chromosome()
+            .clone();
 
         let child = mutator.mutate(&rng, crosser.crossover(&rng, &parent_a, &parent_b));
 
-        let expected_child = individual(&[1.0, 1.9195144, -2.9491906, 4.0, 5.0]).chromosome().clone();
+        let expected_child = individual(&[1.0, 1.9195144, -2.9491906, 4.0, 5.0])
+            .chromosome()
+            .clone();
 
         assert_eq!(child, expected_child);
     }
@@ -178,7 +190,8 @@ mod genetic_algorithm {
         for _ in 0..10 {
             population = ga
                 .evolve(&rng, &population)
-                .expect("evolution should conclude successfully");
+                .expect("evolution should conclude successfully")
+                .0;
         }
 
         let expected_population = vec![

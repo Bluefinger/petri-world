@@ -3,7 +3,7 @@ use petri_nn::Network;
 
 use crate::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CreatureIndividual {
     pub fitness: f32,
     pub chromosome: Chromosome,

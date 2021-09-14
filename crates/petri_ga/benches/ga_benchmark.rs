@@ -94,7 +94,7 @@ pub fn evolve_benchmark(c: &mut Criterion) {
         ];
         
         b.iter(|| {
-            population = ga.evolve(&rng, &population).expect("not to fail");
+            population = ga.evolve(&rng, &population).expect("not to fail").0;
         });
     });
 }

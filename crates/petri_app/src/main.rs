@@ -1,7 +1,4 @@
-use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*,
-};
+use bevy::{diagnostic::LogDiagnosticsPlugin, prelude::*};
 use petri_simulation as sim;
 use sim::SimulationPlugin;
 
@@ -14,11 +11,9 @@ fn main() {
             height: 800.0,
             ..Default::default()
         })
-        .insert_resource(Msaa {
-            samples: 4
-        })
+        .insert_resource(Msaa { samples: 4 })
         .add_plugin(LogDiagnosticsPlugin::default())
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins)
         .add_plugin(SimulationPlugin)
         .run();
