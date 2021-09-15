@@ -5,6 +5,7 @@ use std::f32::consts::*;
 
 /// How far our eye can see:
 ///
+/// ```text
 /// -----------------
 /// |               |
 /// |               |
@@ -14,6 +15,7 @@ use std::f32::consts::*;
 /// |               |
 /// |               |
 /// -----------------
+/// ```
 ///
 /// If @ marks our creature and % marks food, then a FOV_RANGE of:
 ///
@@ -28,6 +30,7 @@ const FOV_RANGE: f32 = 0.25;
 /// our creature sees, then a FOV_ANGLE of:
 ///
 /// - PI/2 = 90° =
+/// ```text
 ///   -----------------
 ///   |             /.|
 ///   |           /...|
@@ -37,8 +40,10 @@ const FOV_RANGE: f32 = 0.25;
 ///   |           \...|
 ///   |             \.|
 ///   -----------------
+/// ```
 ///
 /// - PI = 180° =
+/// ```text
 ///   -----------------
 ///   |       |.......|
 ///   |       |.......|
@@ -48,8 +53,10 @@ const FOV_RANGE: f32 = 0.25;
 ///   |       |.......|
 ///   |       |.......|
 ///   -----------------
+/// ```
 ///
 /// - 2 * PI = 360° =
+/// ```text
 ///   -----------------
 ///   |...............|
 ///   |...............|
@@ -59,10 +66,12 @@ const FOV_RANGE: f32 = 0.25;
 ///   |...............|
 ///   |...............|
 ///   -----------------
+/// ```
 ///
 /// Field of view depends on both FOV_RANGE and FOV_ANGLE:
 ///
 /// - FOV_RANGE=0.4, FOV_ANGLE=PI/2:
+/// ```text
 ///   -----------------
 ///   |       @       |
 ///   |     /.v.\     |
@@ -72,8 +81,10 @@ const FOV_RANGE: f32 = 0.25;
 ///   |               |
 ///   |               |
 ///   -----------------
+/// ```
 ///
 /// - FOV_RANGE=0.5, FOV_ANGLE=2*PI:
+/// ```text
 ///   -----------------
 ///   |               |
 ///   |      ---      |
@@ -83,6 +94,7 @@ const FOV_RANGE: f32 = 0.25;
 ///   |      ---      |
 ///   |               |
 ///   -----------------
+/// ```
 const FOV_ANGLE: f32 = PI + FRAC_PI_4;
 
 /// How much photoreceptors there are in a single eye.
@@ -118,40 +130,52 @@ impl Eye {
 
     pub fn perceive<'a>(
         &self,
-        transform: &Transform,
+        position: &Transform,
         targets: impl Iterator<Item = &'a Transform>,
     ) -> Vec<f32> {
         let mut cells = vec![0.0; self.cells];
 
+        // A base X Vector in 2D space
         let x = Vec2::new(1.0, 0.0);
 
+        let half_fov = self.fov_angle / 2.0;
+
+        // Range of angles to the left and right of our eye that it can see
+        let inside_fov = -half_fov..=half_fov;
+
+        // Get the angle of where our eye is looking toward
+        let (_, eye_angle) = position.rotation.to_axis_angle();
+        // Get our eye's position in the 2D plane
+        let eye_position = position.translation.truncate();
+
         for target in targets {
-            let vec = target.translation.truncate() - transform.translation.truncate();
+            // We only want to determine the 2D length/plane, so we get a Vec2 from here, which is
+            // the diff Vector between our eye and its target. The Z axis is discarded
+            let diff_vec = target.translation.truncate() - eye_position;
 
-            let dist = vec.length();
+            let dist = diff_vec.length();
 
+            // Initial check to see if target is within FOV range.
             if dist >= self.fov_range {
                 continue;
             }
 
-            let vec_angle = x.angle_between(vec);
+            // Work out the angle of the diff Vector
+            let target_angle = x.angle_between(diff_vec);
 
-            let (_, angle) = transform.rotation.to_axis_angle();
+            // Get the difference between angle to target and current angle of the eye
+            let angle = wrap(target_angle - eye_angle, -PI, PI);
 
-            let angle = wrap(vec_angle - angle, -PI, PI);
-
-            if angle < -self.fov_angle / 2.0 || angle > self.fov_angle / 2.0 {
+            // Check if the resulting angle is outside of the FOV
+            if !inside_fov.contains(&angle) {
                 continue;
             }
 
-            let angle = angle + self.fov_angle / 2.0;
+            // Encode which eye cell will "see" the target based on the angle within the FOV
+            let cell = ((angle + half_fov) / self.fov_angle) * (self.cells as f32);
+            let cell = (cell as usize).min(self.cells - 1);
 
-            let cell = angle / self.fov_angle;
-
-            let cell = cell * (self.cells as f32);
-
-            let cell = (cell as usize).min(cells.len() - 1);
-
+            // Determine the cell response/energy based on a ratio of target distance to FOV range
             let energy = (self.fov_range - dist) / self.fov_range;
 
             cells[cell] += energy;
