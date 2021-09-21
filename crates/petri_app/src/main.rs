@@ -3,7 +3,7 @@ use petri_simulation as sim;
 use sim::SimulationPlugin;
 
 fn main() {
-    App::build()
+    App::new()
         .insert_resource(ClearColor(Color::MIDNIGHT_BLUE))
         .insert_resource(WindowDescriptor {
             title: "Petri World!".to_string(),

@@ -3,7 +3,9 @@
 
 use bevy::{core::FixedTimestep, prelude::*, render::camera::WindowOrigin};
 
-pub use crate::{creature::*, creature_individual::*, eye::*, food::*, materials::*, simulation::*};
+pub use crate::{
+    creature::*, creature_individual::*, eye::*, food::*, materials::*, simulation::*,
+};
 
 mod creature;
 mod creature_individual;
@@ -12,6 +14,7 @@ mod food;
 mod materials;
 mod simulation;
 mod utils;
+mod mesh;
 
 const SIM_UPDATE: f64 = 1.0 / 60.0;
 
@@ -31,32 +34,32 @@ struct SimulationSetupStage;
 pub struct SimulationPlugin;
 
 impl Plugin for SimulationPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(camera_setup.system())
-            .add_startup_system(material_setup.system())
-            .add_startup_system(simulation_setup.system())
+    fn build(&self, app: &mut App) {
+        app.add_startup_system(camera_setup)
+            .add_startup_system(material_setup)
+            .add_startup_system(simulation_setup)
             .add_startup_stage(
                 SimulationSetupStage,
                 SystemStage::parallel()
-                    .with_system(creature_setup.system())
-                    .with_system(food_setup.system()),
+                    .with_system(creature_setup)
+                    .with_system(food_setup),
             )
             .add_system_set(
                 SystemSet::new()
                     .label("running")
                     .before("evolving")
                     .with_run_criteria(FixedTimestep::step(SIM_UPDATE))
-                    .with_system(detect_food_collisions.system().label("detect"))
-                    .with_system(creatures_thinking.system().label("thinking").after("detect"))
-                    .with_system(move_creatures.system().label("move").after("thinking")),
+                    .with_system(detect_food_collisions.label("detect"))
+                    .with_system(creatures_thinking.label("thinking").after("detect"))
+                    .with_system(move_creatures.label("move").after("thinking")),
             )
             .add_system_set(
                 SystemSet::new()
                     .label("evolving")
                     .after("running")
-                    .with_run_criteria(evolve_when_ready.system())
-                    .with_system(evolve_creatures.system().chain(log_stats.system()))
-                    .with_system(randomise_food.system()),
+                    .with_run_criteria(evolve_when_ready)
+                    .with_system(evolve_creatures.chain(log_stats))
+                    .with_system(randomise_food),
             );
     }
 }
