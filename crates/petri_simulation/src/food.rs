@@ -3,7 +3,7 @@ use std::iter::repeat_with;
 use crate::*;
 use petri_rand::PetriRand;
 
-#[derive(Debug, Default)]
+#[derive(Component, Debug, Default)]
 pub struct Food;
 
 #[derive(Default, Bundle)]
@@ -26,7 +26,7 @@ pub(crate) fn food_setup(mut commands: Commands, materials: Res<Materials>, sim:
 
         FoodBundle {
             sprite: SpriteBundle {
-                material: materials.food.clone(),
+                texture: materials.food.clone(),
                 transform: Transform {
                     translation,
                     scale,

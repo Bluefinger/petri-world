@@ -153,7 +153,7 @@ pub(crate) fn evolve_creatures(
     );
 
     lifecycle.step = 0;
-    
+
     stats
 }
 

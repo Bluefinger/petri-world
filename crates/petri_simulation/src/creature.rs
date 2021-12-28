@@ -8,16 +8,16 @@ use bevy::prelude::*;
 use petri_nn::Network;
 use petri_rand::PetriRand;
 
-#[derive(Debug, Default)]
+#[derive(Component, Debug, Default)]
 pub struct Creature;
 
-#[derive(Debug, Default)]
+#[derive(Component, Debug, Default)]
 pub struct Control {
     pub speed: f32,
     pub rotation: f32,
 }
 
-#[derive(Debug, Default)]
+#[derive(Component, Debug, Default)]
 pub struct Fitness {
     pub score: f32,
 }
@@ -48,7 +48,7 @@ pub fn creature_setup(mut commands: Commands, materials: Res<Materials>, sim: Re
         CreatureBundle {
             creature: Creature,
             sprite: SpriteBundle {
-                material: materials.creature.clone(),
+                texture: materials.creature.clone(),
                 transform: Transform {
                     translation,
                     rotation,

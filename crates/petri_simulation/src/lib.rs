@@ -14,7 +14,6 @@ mod food;
 mod materials;
 mod simulation;
 mod utils;
-mod mesh;
 
 const SIM_UPDATE: f64 = 1.0 / 60.0;
 

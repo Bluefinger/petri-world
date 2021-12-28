@@ -1,9 +1,10 @@
 #![feature(array_windows)]
 
+use bevy::ecs::component::Component;
 use petri_rand::*;
 use std::iter::{once, repeat, repeat_with};
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone)]
 pub struct Network {
     layers: Vec<usize>,
     neurons: Vec<Neuron>,
