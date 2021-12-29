@@ -116,7 +116,7 @@ pub(crate) fn move_creatures(
 }
 
 pub(crate) fn evolve_when_ready(lifecycle: Res<Lifecycle>) -> ShouldRun {
-    if lifecycle.step == lifecycle.limit {
+    if lifecycle.step >= lifecycle.limit {
         ShouldRun::Yes
     } else {
         ShouldRun::No
