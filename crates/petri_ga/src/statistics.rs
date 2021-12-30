@@ -5,7 +5,7 @@ pub struct StatisticsBuilder {
     min_fitness: f32,
     max_fitness: f32,
     sum_fitness: f32,
-    total_samples: usize,
+    total_samples: f32,
 }
 
 impl StatisticsBuilder {
@@ -14,7 +14,7 @@ impl StatisticsBuilder {
             min_fitness: f32::MAX,
             max_fitness: 0.0,
             sum_fitness: 0.0,
-            total_samples: 0,
+            total_samples: 0.0,
         }
     }
 
@@ -27,7 +27,7 @@ impl StatisticsBuilder {
         self.min_fitness = self.min_fitness.min(fitness);
         self.max_fitness = self.max_fitness.max(fitness);
         self.sum_fitness += fitness;
-        self.total_samples += 1;
+        self.total_samples += 1.0;
 
         self
     }
@@ -38,7 +38,9 @@ impl StatisticsBuilder {
     {
         population
             .iter()
-            .fold(StatisticsBuilder::default(), |stats, individual| stats.add_sample(individual))
+            .fold(StatisticsBuilder::default(), |stats, individual| {
+                stats.add_sample(individual)
+            })
             .build()
     }
 
@@ -47,7 +49,7 @@ impl StatisticsBuilder {
             min_fitness: self.min_fitness,
             max_fitness: self.max_fitness,
             total_fitness: self.sum_fitness,
-            avg_fitness: self.sum_fitness / (self.total_samples as f32),
+            avg_fitness: self.sum_fitness / self.total_samples,
         }
     }
 }

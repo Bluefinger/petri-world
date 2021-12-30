@@ -1,4 +1,4 @@
-use std::f32::consts::{FRAC_PI_4, PI};
+use std::f32::consts::{FRAC_PI_6, PI};
 
 use crate::utils::*;
 use crate::*;
@@ -9,10 +9,10 @@ use petri_ga::{
 use petri_nn::Network;
 use petri_rand::PetriRand;
 
-const SPEED_MIN: f32 = 0.1;
-const SPEED_MAX: f32 = 6.0;
-const SPEED_ACCEL: f32 = 0.5;
-const ROTATION_ACCEL: f32 = FRAC_PI_4;
+const SPEED_MIN: f32 = 0.05;
+const SPEED_MAX: f32 = 5.5;
+const SPEED_ACCEL: f32 = 0.25;
+const ROTATION_ACCEL: f32 = FRAC_PI_6;
 
 #[derive(Debug)]
 pub struct Simulation {
@@ -100,18 +100,19 @@ pub(crate) fn creatures_thinking(
 }
 
 pub(crate) fn move_creatures(
-    mut creatures: Query<(&mut Transform, &Control, With<Creature>)>,
-    mut lifecycle: ResMut<Lifecycle>,
+    mut creatures: Query<(&mut Transform, &Control), With<Creature>>,
     sim: Res<Simulation>,
 ) {
-    for (mut transform, control, _) in creatures.iter_mut() {
+    for (mut transform, control) in creatures.iter_mut() {
         let rot = Quat::from_rotation_z(control.rotation);
         transform.rotation = rot;
         transform.translation += rot.mul_vec3(Vec3::new(control.speed, 0.0, 0.0));
         transform.translation.x = wrap(transform.translation.x, 0.0, sim.world.x);
         transform.translation.y = wrap(transform.translation.y, 0.0, sim.world.y);
     }
+}
 
+pub(crate) fn update_lifecycle(mut lifecycle: ResMut<Lifecycle>) {
     lifecycle.step += 1;
 }
 
@@ -125,13 +126,12 @@ pub(crate) fn evolve_when_ready(lifecycle: Res<Lifecycle>) -> ShouldRun {
 
 pub(crate) fn evolve_creatures(
     mut creatures: Query<(&mut Network, &mut Fitness, &mut Transform), With<Creature>>,
-    mut lifecycle: ResMut<Lifecycle>,
     sim: Res<Simulation>,
     evolver: Res<Evolver>,
 ) -> Statistics {
     let population: Vec<CreatureIndividual> = creatures
-        .iter_mut()
-        .map(|(brain, fitness, _)| CreatureIndividual::from_creature(&brain, &fitness))
+        .iter()
+        .map(|(brain, fitness, _)| CreatureIndividual::from_creature(brain, fitness))
         .collect();
 
     let rng = PetriRand::thread_local();
@@ -140,7 +140,7 @@ pub(crate) fn evolve_creatures(
 
     creatures.iter_mut().zip(new_population).for_each(
         |((mut brain, mut fitness, mut transform), individual)| {
-            fitness.score = 0.0;
+            fitness.score = individual.fitness;
             brain.adjust_weights(individual);
 
             transform.translation = Vec3::new(
@@ -152,9 +152,11 @@ pub(crate) fn evolve_creatures(
         },
     );
 
-    lifecycle.step = 0;
-
     stats
+}
+
+pub(crate) fn reset_lifecycle(mut lifecycle: ResMut<Lifecycle>) {
+    lifecycle.step = 0;
 }
 
 pub(crate) fn randomise_food(

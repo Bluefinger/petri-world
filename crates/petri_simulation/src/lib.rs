@@ -50,7 +50,8 @@ impl Plugin for SimulationPlugin {
                     .with_run_criteria(FixedTimestep::step(SIM_UPDATE))
                     .with_system(detect_food_collisions.label("detect"))
                     .with_system(creatures_thinking.label("thinking").after("detect"))
-                    .with_system(move_creatures.label("move").after("thinking")),
+                    .with_system(move_creatures.after("thinking"))
+                    .with_system(update_lifecycle.after("thinking")),
             )
             .add_system_set(
                 SystemSet::new()
@@ -58,7 +59,8 @@ impl Plugin for SimulationPlugin {
                     .after("running")
                     .with_run_criteria(evolve_when_ready)
                     .with_system(evolve_creatures.chain(log_stats))
-                    .with_system(randomise_food),
+                    .with_system(randomise_food)
+                    .with_system(reset_lifecycle),
             );
     }
 }
