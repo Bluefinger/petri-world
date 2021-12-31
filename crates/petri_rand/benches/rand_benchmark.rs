@@ -104,6 +104,32 @@ pub fn gen_usize_speed(c: &mut Criterion) {
     });
 }
 
+pub fn gen_bool_speed(c: &mut Criterion) {
+    c.bench_function("petri-rand bool", |b| {
+        let rng = PetriRand::new();
+
+        b.iter(|| {
+            let mut sum = black_box(0usize);
+            for _ in 0..10_000 {
+                sum = sum.wrapping_add(if rng.bool() { 1 } else { 0 })
+            }
+            sum
+        });
+    });
+
+    c.bench_function("fastrand bool", |b| {
+        let rng = FastRng::new();
+
+        b.iter(|| {
+            let mut sum = black_box(0usize);
+            for _ in 0..10_000 {
+                sum = sum.wrapping_add(if rng.bool() { 1 } else { 0 })
+            }
+            sum
+        });
+    });
+}
+
 pub fn gen_f32_speed(c: &mut Criterion) {
     c.bench_function("petri-rand f32", |b| {
         let rng = PetriRand::new();
@@ -135,6 +161,7 @@ criterion_group!(
     gen_u32_speed,
     gen_u64_speed,
     gen_usize_speed,
+    gen_bool_speed,
     gen_f32_speed
 );
 criterion_main!(benches);

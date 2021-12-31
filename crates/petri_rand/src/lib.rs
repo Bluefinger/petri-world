@@ -93,7 +93,7 @@ impl PetriRand<WyRand> {
 
     #[inline]
     pub fn bool(&self) -> bool {
-        self.rng.rand().as_ref()[0] < 0b10000000
+        self.get_u64() % 2 == 0
     }
 
     #[cfg(target_pointer_width = "16")]
