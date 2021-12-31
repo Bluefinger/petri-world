@@ -18,7 +18,6 @@ pub struct PetriRand<Rng: GenRand = WyRand> {
     rng: Rng,
 }
 
-
 macro_rules! index {
     ($bigger:tt) => {
         #[inline]
