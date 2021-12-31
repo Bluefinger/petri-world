@@ -113,7 +113,7 @@ mod genetic_algorithm {
 
         let child = mutator.mutate(&rng, crosser.crossover(&rng, &parent_a, &parent_b));
 
-        let expected_child = individual(&[1.0, 1.9195144, -2.9491906, 4.0, 5.0])
+        let expected_child = individual(&[1.4977746, 2.0, 3.489682, 4.0, -5.466439])
             .chromosome()
             .clone();
 
@@ -192,10 +192,10 @@ mod genetic_algorithm {
         }
 
         let expected_population = vec![
-            individual(&[1.9979382, 1.6373904, 2.3867228]),
-            individual(&[2.3059247, 1.3087935, 2.5775788]),
-            individual(&[1.8600383, 1.6250226, 2.5775788]),
-            individual(&[1.8600383, 1.2199795, 2.2783923]),
+            individual(&[0.79804456, 1.0005393, 4.0583534]),
+            individual(&[0.6470088, 1.9588335, 4.3249903]),
+            individual(&[1.370661, 1.4154645, 4.4624763]),
+            individual(&[1.130432, 1.618022, 4.3249903]),
         ];
 
         assert_eq!(population, expected_population);

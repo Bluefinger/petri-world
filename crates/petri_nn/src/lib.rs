@@ -161,11 +161,11 @@ mod tests {
             let rng = PetriRand::with_seed(Default::default());
             let neuron = Neuron::random(&rng, 4);
 
-            assert_relative_eq!(neuron.bias, 0.119923115);
-            assert_relative_eq!(neuron.coefficient, 0.9945836);
+            assert_relative_eq!(neuron.bias, 0.7654091);
+            assert_relative_eq!(neuron.coefficient, -0.77652967);
             assert_relative_eq!(
                 neuron.weights.as_slice(),
-                [0.11937928, 0.13722491, 0.38501358, -0.67805743].as_ref()
+                [-0.63342345, 0.9910984, -0.90073603, 0.9265579].as_ref()
             );
         }
 

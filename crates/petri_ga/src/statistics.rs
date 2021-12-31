@@ -18,6 +18,7 @@ impl StatisticsBuilder {
         }
     }
 
+    #[must_use]
     pub fn add_sample<I>(mut self, individual: &I) -> Self
     where
         I: Individual,

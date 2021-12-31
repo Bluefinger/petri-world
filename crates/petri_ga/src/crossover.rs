@@ -71,7 +71,7 @@ mod tests {
 
         // RNG means selection won't always be 50/50 exactly, but given enough
         // inputs, statistically it should be around 50%.
-        assert_eq!(diff_a, 41);
-        assert_eq!(diff_b, 59);
+        assert_eq!(diff_a, 46);
+        assert_eq!(diff_b, 54);
     }
 }
