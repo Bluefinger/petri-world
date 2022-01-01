@@ -111,7 +111,7 @@ mod tests {
             fn slightly_changes_the_original_chromosome() {
                 let actual = actual(0.5);
 
-                let expected = vec![1.0, 2.4977746, 3.2066927, 4.4896817, 4.849235];
+                let expected = vec![1.0, 2.4977746, 2.7933073, 3.510318, 4.849235];
 
                 approx::assert_relative_eq!(actual.as_slice(), expected.as_slice());
             }
@@ -142,7 +142,7 @@ mod tests {
             fn entirely_changes_the_original_chromosome() {
                 let actual = actual(0.5);
 
-                let expected = vec![0.9441324, 2.4977746, 2.5183606, 3.9569817, 5.4896817];
+                let expected = vec![0.9441324, 2.4977746, 2.5183606, 4.0430183, 4.5103183];
 
                 approx::assert_relative_eq!(actual.as_slice(), expected.as_slice());
             }

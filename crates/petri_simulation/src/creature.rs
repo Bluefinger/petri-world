@@ -34,7 +34,7 @@ pub struct CreatureBundle {
 }
 
 pub fn creature_setup(mut commands: Commands, materials: Res<Materials>, sim: Res<Simulation>) {
-    let rng = PetriRand::thread_local();
+    let rng = PetriRand::new();
 
     let creatures: Vec<CreatureBundle> = repeat_with(|| {
         let translation = Vec3::new(

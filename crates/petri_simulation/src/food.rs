@@ -14,7 +14,7 @@ pub struct FoodBundle {
 }
 
 pub(crate) fn food_setup(mut commands: Commands, materials: Res<Materials>, sim: Res<Simulation>) {
-    let rng = PetriRand::thread_local();
+    let rng = PetriRand::new();
 
     let food: Vec<FoodBundle> = repeat_with(|| {
         let translation = Vec3::new(

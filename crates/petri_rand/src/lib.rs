@@ -3,14 +3,15 @@ use std::{
     rc::Rc,
 };
 
-use crate::gen::WyRand;
+use crate::{entropy::generate_entropy, gen::WyRand};
 
+mod entropy;
 mod gen;
 
 const SCALE: f64 = 2.0 * (1u64 << 63) as f64;
 
 thread_local! {
-    static PETRI: Rc<PetriRand> = Rc::new(PetriRand::new());
+    static PETRI: Rc<PetriRand> = Rc::new(PetriRand::with_seed(generate_entropy()));
 }
 
 #[derive(Debug, Default, Clone)]
@@ -52,12 +53,9 @@ macro_rules! index {
 impl PetriRand {
     #[inline]
     pub fn new() -> Self {
-        Self { rng: WyRand::new() }
-    }
-
-    #[inline]
-    pub fn thread_local() -> Rc<PetriRand> {
-        PETRI.with(|t| t.clone())
+        Self {
+            rng: WyRand::with_seed(PETRI.with(|t| t.get_u64())),
+        }
     }
 
     #[inline]
@@ -65,6 +63,16 @@ impl PetriRand {
         Self {
             rng: WyRand::with_seed(seed),
         }
+    }
+
+    #[inline]
+    pub fn reseed(&self, seed: u64) {
+        self.rng.reseed(seed);
+    }
+
+    #[inline]
+    pub fn reseed_local(seed: u64) {
+        PETRI.with(|t| t.reseed(seed));
     }
 
     #[inline]

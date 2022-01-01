@@ -1,42 +1,25 @@
-use std::{
-    cell::Cell,
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-    thread,
-};
-
-#[cfg(target_arch = "wasm32")]
-use instant::Instant;
-#[cfg(not(target_arch = "wasm32"))]
-use std::time::Instant;
-
-#[inline]
-fn generate_entropy() -> u64 {
-    let mut hasher = DefaultHasher::new();
-    Instant::now().hash(&mut hasher);
-    thread::current().id().hash(&mut hasher);
-    let hash = hasher.finish();
-    (hash << 1) | 1
-}
+use std::cell::Cell;
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct WyRand {
     state: Cell<u64>,
 }
 
 impl WyRand {
-    pub fn new() -> Self {
-        Self {
-            state: Cell::new(generate_entropy()),
-        }
-    }
-
+    #[inline]
     pub fn with_seed(seed: u64) -> Self {
         Self {
             state: Cell::new(seed << 1 | 1),
         }
     }
 
+    #[inline]
+    pub fn reseed(&self, seed: u64) {
+        self.state.set(seed << 1 | 1);
+    }
+
+    #[inline]
     pub fn rand(&self) -> [u8; core::mem::size_of::<u64>()] {
         let state = self.state.get().wrapping_add(0xa0761d6478bd642f);
         self.state.set(state);
@@ -56,6 +39,6 @@ impl Clone for WyRand {
 
 impl Default for WyRand {
     fn default() -> Self {
-        Self::new()
+        Self::with_seed(Default::default())
     }
 }

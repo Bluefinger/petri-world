@@ -58,7 +58,7 @@ pub(crate) fn detect_food_collisions(
     mut q_creatures: Query<(&Transform, &mut Fitness), (With<Creature>, Without<Food>)>,
     sim: Res<Simulation>,
 ) {
-    let rng = PetriRand::thread_local();
+    let rng = PetriRand::new();
 
     for (creature, mut fitness) in q_creatures.iter_mut() {
         for mut food in q_food.iter_mut() {
@@ -134,7 +134,7 @@ pub(crate) fn evolve_creatures(
         .map(|(brain, fitness, _)| CreatureIndividual::from_creature(brain, fitness))
         .collect();
 
-    let rng = PetriRand::thread_local();
+    let rng = PetriRand::new();
 
     let (new_population, stats) = evolver.ga.evolve(&rng, &population).unwrap();
 
@@ -163,7 +163,7 @@ pub(crate) fn randomise_food(
     mut foods: Query<&mut Transform, (With<Food>, Without<Creature>)>,
     sim: Res<Simulation>,
 ) {
-    let rng = PetriRand::thread_local();
+    let rng = PetriRand::new();
 
     for mut food in foods.iter_mut() {
         food.translation = Vec3::new(

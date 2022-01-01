@@ -4,6 +4,20 @@ use wyhash::WyRng;
 use petri_rand::*;
 use rand::prelude::*;
 
+pub fn init_speed(c: &mut Criterion) {
+    c.bench_function("petri-rand init", |b| {
+        b.iter(|| {
+            PetriRand::new()
+        });
+    });
+
+    c.bench_function("fastrand init", |b| {
+        b.iter(|| {
+            FastRng::new()
+        });
+    });
+}
+
 pub fn gen_u32_speed(c: &mut Criterion) {
     c.bench_function("petri-rand u32", |b| {
         let rng = PetriRand::new();
@@ -158,6 +172,7 @@ pub fn gen_f32_speed(c: &mut Criterion) {
 
 criterion_group!(
     benches,
+    init_speed,
     gen_u32_speed,
     gen_u64_speed,
     gen_usize_speed,
