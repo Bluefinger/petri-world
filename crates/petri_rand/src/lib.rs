@@ -3,7 +3,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::gen::{GenRand, WyRand};
+use crate::gen::WyRand;
 
 mod gen;
 
@@ -14,8 +14,9 @@ thread_local! {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct PetriRand<Rng: GenRand = WyRand> {
-    rng: Rng,
+#[repr(transparent)]
+pub struct PetriRand {
+    rng: WyRand,
 }
 
 macro_rules! index {
@@ -48,14 +49,14 @@ macro_rules! index {
     };
 }
 
-impl PetriRand<WyRand> {
+impl PetriRand {
     #[inline]
     pub fn new() -> Self {
         Self { rng: WyRand::new() }
     }
 
     #[inline]
-    pub fn thread_local() -> Rc<Self> {
+    pub fn thread_local() -> Rc<PetriRand> {
         PETRI.with(|t| t.clone())
     }
 
@@ -75,7 +76,6 @@ impl PetriRand<WyRand> {
     pub fn get_u32(&self) -> u32 {
         let mut bytes = [0u8; core::mem::size_of::<u32>()];
         let random = self.rng.rand();
-        let random = random.as_ref();
         let generated = random.len().min(core::mem::size_of::<u32>());
         bytes[..generated].copy_from_slice(&random[..generated]);
         u32::from_le_bytes(bytes)
@@ -93,7 +93,7 @@ impl PetriRand<WyRand> {
 
     #[inline]
     pub fn bool(&self) -> bool {
-        self.get_u64() % 2 == 0
+        self.rng.rand()[0] % 2 == 0
     }
 
     #[cfg(target_pointer_width = "16")]

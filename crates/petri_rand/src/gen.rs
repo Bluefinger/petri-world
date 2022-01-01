@@ -10,12 +10,6 @@ use instant::Instant;
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 
-pub trait GenRand {
-    type Output;
-
-    fn rand(&self) -> Self::Output;
-}
-
 #[inline]
 fn generate_entropy() -> u64 {
     let mut hasher = DefaultHasher::new();
@@ -43,15 +37,7 @@ impl WyRand {
         }
     }
 
-    pub fn reseed(&self, seed: u64) {
-        self.state.set(seed << 1 | 1);
-    }
-}
-
-impl GenRand for WyRand {
-    type Output = [u8; core::mem::size_of::<u64>()];
-
-    fn rand(&self) -> Self::Output {
+    pub fn rand(&self) -> [u8; core::mem::size_of::<u64>()] {
         let state = self.state.get().wrapping_add(0xa0761d6478bd642f);
         self.state.set(state);
         let t: u128 = (state as u128).wrapping_mul((state ^ 0xe7037ed1a0b428db) as u128);
