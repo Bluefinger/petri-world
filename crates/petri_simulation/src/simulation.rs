@@ -13,6 +13,7 @@ const SPEED_MIN: f32 = 0.05;
 const SPEED_MAX: f32 = 5.5;
 const SPEED_ACCEL: f32 = 0.25;
 const ROTATION_ACCEL: f32 = FRAC_PI_6;
+const FRICTION: f32 = 0.05;
 
 #[derive(Debug)]
 pub struct Simulation {
@@ -93,7 +94,7 @@ pub(crate) fn creatures_thinking(
 
         let speed = r1.clamp(-SPEED_ACCEL, SPEED_ACCEL);
 
-        control.speed = (control.speed + speed).clamp(SPEED_MIN, SPEED_MAX);
+        control.speed = (control.speed + speed - FRICTION).clamp(SPEED_MIN, SPEED_MAX);
 
         control.rotation += (r0 - r2).clamp(-ROTATION_ACCEL, ROTATION_ACCEL);
     });

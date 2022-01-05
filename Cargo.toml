@@ -5,9 +5,9 @@ resolver = "2"
 [profile.bench]
 codegen-units = 1
 lto = 'thin'
-debug = 1
+debug = 0
 
 [profile.release]
 codegen-units = 1
 lto = 'thin'
-debug = 1
+debug = 0
